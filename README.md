@@ -68,112 +68,86 @@ in Activity Monitor.
 
 ---
 
-## 4. Image generation setup (ComfyUI + FLUX.1-schnell)
+## 4. Image generation setup (ComfyUI + SDXL-Turbo)
 
-This part is manual because the model files are large (~20GB combined)
-and gated behind a Hugging Face account.
+This part is mostly automated, with one manual step in ComfyUI's UI.
 
-1. Create a free account at https://huggingface.co if you don't have
-   one, and accept the FLUX.1-schnell license at:
-   https://huggingface.co/black-forest-labs/FLUX.1-schnell
+**SDXL-Turbo** is used here because it's well-suited to a 24GB Mac
+Mini's shared memory: a single ~6.9GB checkpoint (UNet+CLIP+VAE
+combined), runs in **1 step**, and typically generates a 512x512
+image in **5-15 seconds** on an M4 — and coexists comfortably with
+the LLM in memory.
 
-2. Run the download script — it will prompt once for a Hugging Face
-   access token (read access is enough, from
-   https://huggingface.co/settings/tokens), cache it locally, and use
-   `wget` to download + place all four required files automatically:
+1. Download the checkpoint:
 
    ```bash
    cd ~/ai-stack
-   chmod +x download-flux-models.sh
-   bash download-flux-models.sh
+   chmod +x download-sdxl-turbo.sh
+   bash download-sdxl-turbo.sh
    ```
 
-   This downloads (~20GB total):
+   This downloads `sd_xl_turbo_1.0_fp16.safetensors` (~6.9GB) into
+   `~/ai-stack/comfyui/models/checkpoints/` and restarts ComfyUI.
 
-   | File | Destination |
-   |------|-------------|
-   | `flux1-schnell.safetensors` | `models/checkpoints/` (and symlinked into `models/unet/`) |
-   | `ae.safetensors` | `models/vae/` |
-   | `clip_l.safetensors` | `models/clip/` |
-   | `t5xxl_fp8_e4m3fn.safetensors` | `models/clip/` (fp8 variant — recommended for 24GB systems) |
-
-   The script restarts ComfyUI automatically when done.
-   and check that the checkpoint/VAE/CLIP dropdowns are populated.
-
-5. **Connect ComfyUI to Open WebUI:**
+2. **Connect ComfyUI to Open WebUI:**
 
    - Open **http://localhost:8188** (the ComfyUI web interface,
      running natively on the Mac Mini).
    - Click the **gear/settings icon** near the top of the toolbar
      (next to "Queue Size").
-   - In the settings panel, find **"Enable Dev mode options (API
-     save, etc.)"** — it's typically under the "Comfy" category, or
-     use the settings search box and type "dev" to jump straight to
-     it.
+   - Find **"Enable Dev mode options (API save, etc.)"** — typically
+     under the "Comfy" category, or use the settings search box and
+     type "dev".
    - Toggle it **on** and close the settings panel.
-   - Build (or load) a basic FLUX text-to-image workflow on the
-     canvas. To make this easy, this repo includes a ready-made
-     workflow: **`flux-schnell-workflow.json`**. To use it:
-     - Drag `flux-schnell-workflow.json` from Finder directly onto
-       the ComfyUI canvas in your browser (or use the menu →
-       **Workflow → Open** and select the file).
-     - This loads a pre-wired graph: `UNETLoader` → `DualCLIPLoader`
-       + `VAELoader` → `CLIPTextEncode` (positive/negative) →
-       `EmptyLatentImage` → `KSampler` → `VAEDecode` → `SaveImage`,
-       already pointing at the exact filenames downloaded in Step 4
-       (`flux1-schnell.safetensors`, `clip_l.safetensors`,
-       `t5xxl_fp8_e4m3fn.safetensors`, `ae.safetensors`), with
-       schnell-appropriate settings (4 steps, CFG 1.0).
-     - Click **Queue Prompt** once to confirm it generates an image
-       successfully before exporting it for Open WebUI.
-   - With Dev Mode on, open the workflow save menu — you'll now see
-     an extra option: **"Save (API Format)"**. Click it (*not* the
+   - Drag `sdxl-turbo-workflow.json` from this repo directly onto the
+     ComfyUI canvas in your browser (or **Workflow → Open** and
+     select the file). This loads a pre-wired graph:
+     `CheckpointLoaderSimple` → `CLIPTextEncode` (positive/negative)
+     → `EmptyLatentImage` → `KSampler` → `VAEDecode` → `SaveImage`,
+     already pointing at `sd_xl_turbo_1.0_fp16.safetensors` with
+     turbo-appropriate settings (1 step, CFG 1.0, 512x512).
+   - Click **Queue Prompt** once to confirm it generates an image
+     successfully.
+   - With Dev Mode on, open the workflow save menu — you'll see an
+     extra option: **"Save (API Format)"**. Click it (*not* the
      regular "Save") and download the resulting JSON file.
-   - In Open WebUI, go to **Admin Panel → Settings → Images**:
-     - Image Generation Engine: `ComfyUI`
-     - ComfyUI Base URL: `http://host.docker.internal:8188`
-     - Upload the workflow JSON you just exported.
-     - Map the **ComfyUI Workflow Nodes**. Each field has a *Key*
-       (the input parameter name) and a *Node ID* (which node in the
-       workflow contains it). For `flux-schnell-workflow.json`, the
-       node IDs are preserved as 1-9.
 
-       **Note:** depending on your Open WebUI version, you may only
-       see a subset of these fields (commonly just Model, Prompt,
-       Width, Height, Steps, and Seed — without Negative Prompt, CFG
-       Scale, Sampler, or Scheduler). That's fine. Map whichever
-       fields are present:
+3. In Open WebUI, go to **Admin Panel → Settings → Images**:
 
-       | Field | Key | Node ID(s) | If field is missing |
-       |---|---|---|---|
-       | Model | `unet_name` | `1` | — |
-       | Prompt | `text` | `4` | — |
-       | Width | `width` | `6` | uses workflow default (1024) |
-       | Height | `height` | `6` | uses workflow default (1024) |
-       | Steps | `steps` | `7` | uses workflow default (4) |
-       | Seed | `seed` | `7` | randomized per workflow setting |
-       | Negative Prompt | `text` | `5` | uses workflow default ("") |
-       | CFG Scale | `cfg` | `7` | uses workflow default (1.0) |
-       | Sampler | `sampler_name` | `7` | uses workflow default (`euler`) |
-       | Scheduler | `scheduler` | `7` | uses workflow default (`simple`) |
+   - Image Generation Engine: `ComfyUI`
+   - ComfyUI Base URL: `http://host.docker.internal:8188`
+   - ComfyUI API Key: leave empty (only needed for comfy.org's paid
+     cloud nodes, not used here)
+   - Upload the workflow JSON you just exported.
+   - Set the **Image Settings**:
 
-       The workflow's hardcoded defaults are already correct for
-       FLUX.1-schnell, so unmapped fields aren't a problem — Model
-       and Prompt are the only two that are essential.
+     | Setting | Value |
+     |---|---|
+     | Model Id | `sd_xl_turbo_1.0_fp16.safetensors` |
+     | Image Size | `512x512` |
+     | Steps | `1` |
 
-       > **Important:** Open WebUI's default Key for "Model" is
-       > `ckpt_name` (for `CheckpointLoaderSimple`). Since this
-       > workflow uses `UNETLoader`, you must change that Key to
-       > `unet_name`, or model selection won't work.
+   - Map the **ComfyUI Workflow Nodes**. Depending on your Open WebUI
+     version, you may only see a subset of these fields (commonly
+     just Model, Prompt, Width, Height, Steps, and Seed). Map
+     whichever are present:
 
-     - In Open WebUI's **Image Settings** (separate from the node
-       mapping above), set:
+     | Field | Key | Node ID(s) | If field is missing |
+     |---|---|---|---|
+     | Model | `ckpt_name` | `1` | — |
+     | Prompt | `text` | `4` | — |
+     | Width | `width` | `6` | uses workflow default (512) |
+     | Height | `height` | `6` | uses workflow default (512) |
+     | Steps | `steps` | `7` | uses workflow default (1) |
+     | Seed | `seed` | `7` | randomized per workflow setting |
+     | Negative Prompt | `text` | `5` | uses workflow default |
+     | CFG Scale | `cfg` | `7` | uses workflow default (1.0) |
+     | Sampler | `sampler_name` | `7` | uses workflow default (`euler_ancestral`) |
+     | Scheduler | `scheduler` | `7` | uses workflow default (`sgm_uniform`) |
 
-       | Setting | Value | Why |
-       |---|---|---|
-       | Model Id | `flux1-schnell.safetensors` | must exactly match the filename in `models/unet/` |
-       | Image Size | `1024x1024` | FLUX's native/optimal resolution (matches node 6 default) |
-       | Steps | `4` | schnell is distilled for 1-4 steps; more steps won't improve quality |
+     This workflow uses `CheckpointLoaderSimple`, so the Model Key is
+     the default `ckpt_name` — no changes needed there.
+
    - Save. You should now see an image-generation option in the chat
      interface.
 
@@ -183,23 +157,15 @@ and gated behind a Hugging Face account.
 
 ### Testing the integration
 
-1. Start a new chat in Open WebUI (top-left **+ New Chat**, any
-   model selected — image generation is triggered separately from
-   the chat model).
-2. Type a simple prompt in the message box, e.g.
-   `a red fox sitting in a snowy forest`.
-3. Before sending, click the **image/picture icon** below the message
-   box (next to the attachment/upload icons) to enable image
-   generation for this message — or send the message normally and
-   then click the **"Generate Image"** icon that appears under
-   Claude's/the assistant's response.
-4. Send the message. You should see a loading indicator while
-   ComfyUI processes the request, followed by a generated 1024x1024
-   image inline in the chat.
-5. **Expected timing**: on an M4 with the MPS fix applied, a single
-   4-step FLUX.1-schnell image typically takes roughly 1-3 minutes
-   the first time (model loading) and somewhat faster on subsequent
-   generations (model stays cached in memory).
+1. Start a new chat in Open WebUI (any model selected — image
+   generation is triggered separately from the chat model).
+2. Type a simple prompt, e.g. `a red fox sitting in a snowy forest`.
+3. Click the **image-generation icon** (next to the "+" attachment
+   icon below the message box, or under the assistant's response,
+   depending on your version) to enable image generation for this
+   message.
+4. Send the message. With SDXL-Turbo this should complete in roughly
+   5-15 seconds and show a 512x512 image inline in the chat.
 
 **If it fails**, check these in order:
 
@@ -208,83 +174,23 @@ and gated behind a Hugging Face account.
   ```bash
   curl http://localhost:8188/system_stats
   ```
-  If this doesn't return JSON, ComfyUI itself isn't up (see Section 3
-  troubleshooting).
+  If this doesn't return JSON, ComfyUI itself isn't up.
 
-- **"Invalid workflow" or node mapping errors**: re-check the Model
-  field's Key is `unet_name` (not the default `ckpt_name`), and that
-  Node IDs match the table above (1, 4, 6, 6, 7, 7).
+- **"Invalid workflow" or node mapping errors**: re-check the Node
+  IDs match the table above (1, 4, 6, 6, 7, 7) and that the workflow
+  was exported via "Save (API Format)".
 
-- **Image generates but looks like noise/garbage**: usually means the
-  wrong CLIP/VAE files are loaded, or the UNet `weight_dtype` is set
-  to `fp8_e4m3fn` again instead of `default` — re-check node 1 in the
-  workflow.
+- **Image generates but looks wrong/garbage**: confirm the checkpoint
+  filename in node 1 exactly matches the file in
+  `~/ai-stack/comfyui/models/checkpoints/`.
 
-- **Live progress**: tail ComfyUI's logs in a separate terminal while
-  testing —
+- **Live progress / debugging**: check what's queued or completed
+  directly via ComfyUI's API:
   ```bash
-  tail -f ~/ai-stack/logs/comfyui.out.log
+  curl http://localhost:8188/queue
+  curl http://localhost:8188/history
   ```
-  This shows the actual generation progress bar and any Python
-  errors in real time, which is often more informative than Open
-  WebUI's error message.
-
----
-
-## 4b. Faster alternative: SDXL-Turbo (recommended for 24GB Macs)
-
-**If FLUX.1-schnell image generation is taking 20-30+ minutes**, the
-problem is memory pressure: FLUX's ~17GB+ of split model files plus
-an 8B LLM don't comfortably fit in 24GB of shared memory on Apple
-Silicon, causing heavy swapping.
-
-**SDXL-Turbo** is a much better fit: a single ~6.9GB checkpoint
-(UNet+CLIP+VAE combined), runs in **1 step**, and typically generates
-a 512x512 image in **5-15 seconds** on an M4. Quality is lower than
-FLUX but more than usable for chat-based image generation, and it
-coexists comfortably with the LLM in memory.
-
-1. Download it:
-
-   ```bash
-   cd ~/ai-stack
-   chmod +x download-sdxl-turbo.sh
-   bash download-sdxl-turbo.sh
-   ```
-
-2. Import `sdxl-turbo-workflow.json` into ComfyUI (drag onto canvas),
-   click **Queue Prompt** to confirm it generates an image quickly,
-   then export via **Save (API Format)** as before.
-
-3. In Open WebUI → Admin Settings → Images, upload the new workflow
-   and update both the Image Settings and Workflow Node mappings:
-
-   | Setting | Value |
-   |---|---|
-   | Model Id | `sd_xl_turbo_1.0_fp16.safetensors` |
-   | Image Size | `512x512` |
-   | Steps | `1` |
-
-   | Field | Key | Node ID |
-   |---|---|---|
-   | Model | `ckpt_name` | `1` |
-   | Prompt | `text` | `4` |
-   | Width | `width` | `6` |
-   | Height | `height` | `6` |
-   | Steps | `steps` | `7` |
-   | Seed | `seed` | `7` |
-
-   > Note: this workflow uses `CheckpointLoaderSimple`, so the Model
-   > Key is the **default `ckpt_name`** — unlike the FLUX workflow,
-   > you do *not* need to change it to `unet_name` here.
-
-4. Test generation again — should now be near-instant. If you still
-   want FLUX-quality images occasionally, you can keep both workflows
-   saved and switch between them in Admin Settings as needed (e.g.
-   SDXL-Turbo for everyday chat, FLUX for occasional high-quality
-   renders when you don't mind the wait and stop Ollama first).
-
----
+  This is often more informative than Open WebUI's error message.
 
 ## 5. Mobile access (iOS / Android)
 
