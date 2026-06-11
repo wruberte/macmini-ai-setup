@@ -112,10 +112,20 @@ and gated behind a Hugging Face account.
      it.
    - Toggle it **on** and close the settings panel.
    - Build (or load) a basic FLUX text-to-image workflow on the
-     canvas — for FLUX.1-schnell this is typically:
-     `CheckpointLoaderSimple` (or `UNETLoader` + dual `CLIPLoader` +
-     `VAELoader` if using the split files) → `CLIPTextEncode` →
-     `KSampler` → `VAEDecode` → `SaveImage`.
+     canvas. To make this easy, this repo includes a ready-made
+     workflow: **`flux-schnell-workflow.json`**. To use it:
+     - Drag `flux-schnell-workflow.json` from Finder directly onto
+       the ComfyUI canvas in your browser (or use the menu →
+       **Workflow → Open** and select the file).
+     - This loads a pre-wired graph: `UNETLoader` → `DualCLIPLoader`
+       + `VAELoader` → `CLIPTextEncode` (positive/negative) →
+       `EmptyLatentImage` → `KSampler` → `VAEDecode` → `SaveImage`,
+       already pointing at the exact filenames downloaded in Step 4
+       (`flux1-schnell.safetensors`, `clip_l.safetensors`,
+       `t5xxl_fp8_e4m3fn.safetensors`, `ae.safetensors`), with
+       schnell-appropriate settings (4 steps, CFG 1.0).
+     - Click **Queue Prompt** once to confirm it generates an image
+       successfully before exporting it for Open WebUI.
    - With Dev Mode on, open the workflow save menu — you'll now see
      an extra option: **"Save (API Format)"**. Click it (*not* the
      regular "Save") and download the resulting JSON file.
