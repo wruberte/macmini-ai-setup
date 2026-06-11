@@ -136,29 +136,35 @@ and gated behind a Hugging Face account.
      - Map the **ComfyUI Workflow Nodes**. Each field has a *Key*
        (the input parameter name) and a *Node ID* (which node in the
        workflow contains it). For `flux-schnell-workflow.json`, the
-       node IDs are preserved as 1-9, so use:
+       node IDs are preserved as 1-9.
 
-       | Field | Key | Node ID(s) |
-       |---|---|---|
-       | Model | `unet_name` | `1` |
-       | Prompt | `text` | `4` |
-       | Negative Prompt | `text` | `5` |
-       | Width | `width` | `6` |
-       | Height | `height` | `6` |
-       | Steps | `steps` | `7` |
-       | CFG Scale | `cfg` | `7` |
-       | Sampler | `sampler_name` | `7` |
-       | Scheduler | `scheduler` | `7` |
-       | Seed | `seed` | `7` |
+       **Note:** depending on your Open WebUI version, you may only
+       see a subset of these fields (commonly just Model, Prompt,
+       Width, Height, Steps, and Seed — without Negative Prompt, CFG
+       Scale, Sampler, or Scheduler). That's fine. Map whichever
+       fields are present:
+
+       | Field | Key | Node ID(s) | If field is missing |
+       |---|---|---|---|
+       | Model | `unet_name` | `1` | — |
+       | Prompt | `text` | `4` | — |
+       | Width | `width` | `6` | uses workflow default (1024) |
+       | Height | `height` | `6` | uses workflow default (1024) |
+       | Steps | `steps` | `7` | uses workflow default (4) |
+       | Seed | `seed` | `7` | randomized per workflow setting |
+       | Negative Prompt | `text` | `5` | uses workflow default ("") |
+       | CFG Scale | `cfg` | `7` | uses workflow default (1.0) |
+       | Sampler | `sampler_name` | `7` | uses workflow default (`euler`) |
+       | Scheduler | `scheduler` | `7` | uses workflow default (`simple`) |
+
+       The workflow's hardcoded defaults are already correct for
+       FLUX.1-schnell, so unmapped fields aren't a problem — Model
+       and Prompt are the only two that are essential.
 
        > **Important:** Open WebUI's default Key for "Model" is
        > `ckpt_name` (for `CheckpointLoaderSimple`). Since this
        > workflow uses `UNETLoader`, you must change that Key to
        > `unet_name`, or model selection won't work.
-       >
-       > Only the Prompt field is strictly required — any other
-       > field can be left blank to fall back to the value baked
-       > into the workflow JSON.
    - Save. You should now see an image-generation option in the chat
      interface.
 
