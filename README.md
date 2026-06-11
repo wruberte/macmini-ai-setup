@@ -165,6 +165,15 @@ and gated behind a Hugging Face account.
        > `ckpt_name` (for `CheckpointLoaderSimple`). Since this
        > workflow uses `UNETLoader`, you must change that Key to
        > `unet_name`, or model selection won't work.
+
+     - In Open WebUI's **Image Settings** (separate from the node
+       mapping above), set:
+
+       | Setting | Value | Why |
+       |---|---|---|
+       | Model Id | `flux1-schnell.safetensors` | must exactly match the filename in `models/unet/` |
+       | Image Size | `1024x1024` | FLUX's native/optimal resolution (matches node 6 default) |
+       | Steps | `4` | schnell is distilled for 1-4 steps; more steps won't improve quality |
    - Save. You should now see an image-generation option in the chat
      interface.
 
