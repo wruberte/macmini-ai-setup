@@ -15,7 +15,7 @@
         { "name": "MODEL", "type": "MODEL", "links": [1], "slot_index": 0 }
       ],
       "properties": { "Node name for S&R": "UNETLoader" },
-      "widgets_values": ["flux1-schnell.safetensors", "fp8_e4m3fn"]
+      "widgets_values": ["flux1-schnell.safetensors", "default"]
     },
     {
       "id": 2,
