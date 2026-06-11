@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: always
+    ports:
+      - "3000:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      # --- LLM backend (Ollama running natively on the Mac) ---
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+
+      # --- Image generation backend (ComfyUI running natively on the Mac) ---
+      - ENABLE_IMAGE_GENERATION=True
+      - IMAGE_GENERATION_ENGINE=comfyui
+      - COMFYUI_BASE_URL=http://host.docker.internal:8188
+
+      # --- Default model shown to users ---
+      - DEFAULT_MODELS=mannix/llama3.1-8b-abliterated:q5_K_M
+
+      # --- Misc ---
+      - WEBUI_AUTH=True   # set to False only if this is a fully trusted LAN
+    volumes:
+      - open-webui-data:/app/backend/data
+
+volumes:
+  open-webui-data:

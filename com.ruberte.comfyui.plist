@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+ "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.ruberte.comfyui</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>__HOME__/ai-stack/comfyui/venv/bin/python</string>
+        <string>__HOME__/ai-stack/comfyui/main.py</string>
+        <string>--listen</string>
+        <string>0.0.0.0</string>
+        <string>--port</string>
+        <string>8188</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>__HOME__/ai-stack/comfyui</string>
+
+    <!-- Start at boot -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Restart automatically if it crashes or is killed for an update -->
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>__HOME__/ai-stack/logs/comfyui.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>__HOME__/ai-stack/logs/comfyui.err.log</string>
+</dict>
+</plist>
