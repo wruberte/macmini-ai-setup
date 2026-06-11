@@ -181,6 +181,54 @@ and gated behind a Hugging Face account.
 > always because the workflow was exported with the regular Save
 > button instead of **Save (API Format)** — re-export it.
 
+### Testing the integration
+
+1. Start a new chat in Open WebUI (top-left **+ New Chat**, any
+   model selected — image generation is triggered separately from
+   the chat model).
+2. Type a simple prompt in the message box, e.g.
+   `a red fox sitting in a snowy forest`.
+3. Before sending, click the **image/picture icon** below the message
+   box (next to the attachment/upload icons) to enable image
+   generation for this message — or send the message normally and
+   then click the **"Generate Image"** icon that appears under
+   Claude's/the assistant's response.
+4. Send the message. You should see a loading indicator while
+   ComfyUI processes the request, followed by a generated 1024x1024
+   image inline in the chat.
+5. **Expected timing**: on an M4 with the MPS fix applied, a single
+   4-step FLUX.1-schnell image typically takes roughly 1-3 minutes
+   the first time (model loading) and somewhat faster on subsequent
+   generations (model stays cached in memory).
+
+**If it fails**, check these in order:
+
+- **"Connection error" / can't reach ComfyUI**: confirm ComfyUI is
+  actually running —
+  ```bash
+  curl http://localhost:8188/system_stats
+  ```
+  If this doesn't return JSON, ComfyUI itself isn't up (see Section 3
+  troubleshooting).
+
+- **"Invalid workflow" or node mapping errors**: re-check the Model
+  field's Key is `unet_name` (not the default `ckpt_name`), and that
+  Node IDs match the table above (1, 4, 6, 6, 7, 7).
+
+- **Image generates but looks like noise/garbage**: usually means the
+  wrong CLIP/VAE files are loaded, or the UNet `weight_dtype` is set
+  to `fp8_e4m3fn` again instead of `default` — re-check node 1 in the
+  workflow.
+
+- **Live progress**: tail ComfyUI's logs in a separate terminal while
+  testing —
+  ```bash
+  tail -f ~/ai-stack/logs/comfyui.out.log
+  ```
+  This shows the actual generation progress bar and any Python
+  errors in real time, which is often more informative than Open
+  WebUI's error message.
+
 ---
 
 ## 5. Mobile access (iOS / Android)
