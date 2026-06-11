@@ -133,9 +133,32 @@ and gated behind a Hugging Face account.
      - Image Generation Engine: `ComfyUI`
      - ComfyUI Base URL: `http://host.docker.internal:8188`
      - Upload the workflow JSON you just exported.
-     - Map the workflow nodes: prompt, model/checkpoint, width,
-       height, steps, seed (Open WebUI's UI walks you through mapping
-       each one to a node in your workflow).
+     - Map the **ComfyUI Workflow Nodes**. Each field has a *Key*
+       (the input parameter name) and a *Node ID* (which node in the
+       workflow contains it). For `flux-schnell-workflow.json`, the
+       node IDs are preserved as 1-9, so use:
+
+       | Field | Key | Node ID(s) |
+       |---|---|---|
+       | Model | `unet_name` | `1` |
+       | Prompt | `text` | `4` |
+       | Negative Prompt | `text` | `5` |
+       | Width | `width` | `6` |
+       | Height | `height` | `6` |
+       | Steps | `steps` | `7` |
+       | CFG Scale | `cfg` | `7` |
+       | Sampler | `sampler_name` | `7` |
+       | Scheduler | `scheduler` | `7` |
+       | Seed | `seed` | `7` |
+
+       > **Important:** Open WebUI's default Key for "Model" is
+       > `ckpt_name` (for `CheckpointLoaderSimple`). Since this
+       > workflow uses `UNETLoader`, you must change that Key to
+       > `unet_name`, or model selection won't work.
+       >
+       > Only the Prompt field is strictly required — any other
+       > field can be left blank to fall back to the value baked
+       > into the workflow JSON.
    - Save. You should now see an image-generation option in the chat
      interface.
 
