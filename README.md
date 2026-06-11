@@ -231,6 +231,61 @@ and gated behind a Hugging Face account.
 
 ---
 
+## 4b. Faster alternative: SDXL-Turbo (recommended for 24GB Macs)
+
+**If FLUX.1-schnell image generation is taking 20-30+ minutes**, the
+problem is memory pressure: FLUX's ~17GB+ of split model files plus
+an 8B LLM don't comfortably fit in 24GB of shared memory on Apple
+Silicon, causing heavy swapping.
+
+**SDXL-Turbo** is a much better fit: a single ~6.9GB checkpoint
+(UNet+CLIP+VAE combined), runs in **1 step**, and typically generates
+a 512x512 image in **5-15 seconds** on an M4. Quality is lower than
+FLUX but more than usable for chat-based image generation, and it
+coexists comfortably with the LLM in memory.
+
+1. Download it:
+
+   ```bash
+   cd ~/ai-stack
+   chmod +x download-sdxl-turbo.sh
+   bash download-sdxl-turbo.sh
+   ```
+
+2. Import `sdxl-turbo-workflow.json` into ComfyUI (drag onto canvas),
+   click **Queue Prompt** to confirm it generates an image quickly,
+   then export via **Save (API Format)** as before.
+
+3. In Open WebUI → Admin Settings → Images, upload the new workflow
+   and update both the Image Settings and Workflow Node mappings:
+
+   | Setting | Value |
+   |---|---|
+   | Model Id | `sd_xl_turbo_1.0_fp16.safetensors` |
+   | Image Size | `512x512` |
+   | Steps | `1` |
+
+   | Field | Key | Node ID |
+   |---|---|---|
+   | Model | `ckpt_name` | `1` |
+   | Prompt | `text` | `4` |
+   | Width | `width` | `6` |
+   | Height | `height` | `6` |
+   | Steps | `steps` | `7` |
+   | Seed | `seed` | `7` |
+
+   > Note: this workflow uses `CheckpointLoaderSimple`, so the Model
+   > Key is the **default `ckpt_name`** — unlike the FLUX workflow,
+   > you do *not* need to change it to `unet_name` here.
+
+4. Test generation again — should now be near-instant. If you still
+   want FLUX-quality images occasionally, you can keep both workflows
+   saved and switch between them in Admin Settings as needed (e.g.
+   SDXL-Turbo for everyday chat, FLUX for occasional high-quality
+   renders when you don't mind the wait and stop Ollama first).
+
+---
+
 ## 5. Mobile access (iOS / Android)
 
 ### Option A — Open WebUI as a PWA (simplest, no extra app)
