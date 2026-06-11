@@ -77,10 +77,10 @@ and gated behind a Hugging Face account.
    one, and accept the FLUX.1-schnell license at:
    https://huggingface.co/black-forest-labs/FLUX.1-schnell
 
-2. Run the download script — it installs `huggingface-cli`, prompts
-   for a one-time login (a read-access token from
-   https://huggingface.co/settings/tokens), and downloads + places
-   all four required files automatically:
+2. Run the download script — it will prompt once for a Hugging Face
+   access token (read access is enough, from
+   https://huggingface.co/settings/tokens), cache it locally, and use
+   `wget` to download + place all four required files automatically:
 
    ```bash
    cd ~/ai-stack
