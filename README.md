@@ -101,11 +101,25 @@ and gated behind a Hugging Face account.
    and check that the checkpoint/VAE/CLIP dropdowns are populated.
 
 5. **Connect ComfyUI to Open WebUI:**
-   - In ComfyUI, click the gear icon → enable **Dev Mode Options**.
-   - Build (or load) a basic FLUX text-to-image workflow.
-   - With Dev Mode on, click **Save (API Format)** — *not* the regular
-     Save — and download the workflow JSON.
-   - In Open WebUI: **Admin Panel → Settings → Images**
+
+   - Open **http://localhost:8188** (the ComfyUI web interface,
+     running natively on the Mac Mini).
+   - Click the **gear/settings icon** near the top of the toolbar
+     (next to "Queue Size").
+   - In the settings panel, find **"Enable Dev mode options (API
+     save, etc.)"** — it's typically under the "Comfy" category, or
+     use the settings search box and type "dev" to jump straight to
+     it.
+   - Toggle it **on** and close the settings panel.
+   - Build (or load) a basic FLUX text-to-image workflow on the
+     canvas — for FLUX.1-schnell this is typically:
+     `CheckpointLoaderSimple` (or `UNETLoader` + dual `CLIPLoader` +
+     `VAELoader` if using the split files) → `CLIPTextEncode` →
+     `KSampler` → `VAEDecode` → `SaveImage`.
+   - With Dev Mode on, open the workflow save menu — you'll now see
+     an extra option: **"Save (API Format)"**. Click it (*not* the
+     regular "Save") and download the resulting JSON file.
+   - In Open WebUI, go to **Admin Panel → Settings → Images**:
      - Image Generation Engine: `ComfyUI`
      - ComfyUI Base URL: `http://host.docker.internal:8188`
      - Upload the workflow JSON you just exported.
