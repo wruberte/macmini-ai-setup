@@ -77,23 +77,27 @@ and gated behind a Hugging Face account.
    one, and accept the FLUX.1-schnell license at:
    https://huggingface.co/black-forest-labs/FLUX.1-schnell
 
-2. Download these files and place them as shown (use the HF web UI,
-   or `huggingface-cli download` if you prefer the command line):
-
-   | File | Destination folder |
-   |------|---------------------|
-   | `flux1-schnell.safetensors` | `~/ai-stack/comfyui/models/checkpoints/` and `~/ai-stack/comfyui/models/unet/` (symlink is fine) |
-   | `ae.safetensors` | `~/ai-stack/comfyui/models/vae/` |
-   | `clip_l.safetensors` | `~/ai-stack/comfyui/models/clip/` |
-   | `t5xxl_fp8_e4m3fn.safetensors` | `~/ai-stack/comfyui/models/clip/` (the fp8 variant is recommended for 24GB systems) |
-
-3. Restart ComfyUI so it picks up the new models:
+2. Run the download script — it installs `huggingface-cli`, prompts
+   for a one-time login (a read-access token from
+   https://huggingface.co/settings/tokens), and downloads + places
+   all four required files automatically:
 
    ```bash
-   launchctl kickstart -k gui/$(id -u)/com.ruberte.comfyui
+   cd ~/ai-stack
+   chmod +x download-flux-models.sh
+   bash download-flux-models.sh
    ```
 
-4. Confirm ComfyUI sees the models: visit **http://localhost:8188**,
+   This downloads (~20GB total):
+
+   | File | Destination |
+   |------|-------------|
+   | `flux1-schnell.safetensors` | `models/checkpoints/` (and symlinked into `models/unet/`) |
+   | `ae.safetensors` | `models/vae/` |
+   | `clip_l.safetensors` | `models/clip/` |
+   | `t5xxl_fp8_e4m3fn.safetensors` | `models/clip/` (fp8 variant — recommended for 24GB systems) |
+
+   The script restarts ComfyUI automatically when done.
    and check that the checkpoint/VAE/CLIP dropdowns are populated.
 
 5. **Connect ComfyUI to Open WebUI:**
@@ -208,7 +212,32 @@ ollama ps
 
 ---
 
-## 9. RAM budget reference (24GB system)
+## 9. Uninstalling
+
+To remove the stack, stop all services, and unload the launchd jobs,
+but keep ComfyUI and your downloaded models in place (in case you
+want to reinstall later):
+
+```bash
+cd ~/ai-stack
+bash uninstall.sh
+```
+
+To remove **everything** — including Ollama itself, the LLM model,
+ComfyUI, and all downloaded image models:
+
+```bash
+bash uninstall.sh --purge
+```
+
+> Note: `--purge` does not touch Homebrew, OrbStack/Docker, or
+> Tailscale, since those are general-purpose tools you likely use
+> for other things. Remove those separately with `brew uninstall
+> --cask orbstack` / `brew uninstall --cask tailscale` if desired.
+
+---
+
+## 10. RAM budget reference (24GB system)
 
 | Item | Approx. RAM |
 |------|-------------|
