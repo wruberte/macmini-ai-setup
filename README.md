@@ -108,9 +108,6 @@ the LLM in memory.
      turbo-appropriate settings (1 step, CFG 1.0, 512x512).
    - Click **Queue Prompt** once to confirm it generates an image
      successfully.
-   - With Dev Mode on, open the workflow save menu — you'll see an
-     extra option: **"Save (API Format)"**. Click it (*not* the
-     regular "Save") and download the resulting JSON file.
 
 3. In Open WebUI, go to **Admin Panel → Settings → Images**:
 
@@ -118,7 +115,9 @@ the LLM in memory.
    - ComfyUI Base URL: `http://host.docker.internal:8188`
    - ComfyUI API Key: leave empty (only needed for comfy.org's paid
      cloud nodes, not used here)
-   - Upload the workflow JSON you just exported.
+   - Upload **`sdxl-turbo-workflow-api.json`** (included in this
+     repo) — **do not** use ComfyUI's "Save (API Format)" export for
+     this workflow. See the note below for why.
    - Set the **Image Settings**:
 
      | Setting | Value |
@@ -151,9 +150,20 @@ the LLM in memory.
    - Save. You should now see an image-generation option in the chat
      interface.
 
-> If you ever get "Invalid workflow / JSON parse error," it's almost
-> always because the workflow was exported with the regular Save
-> button instead of **Save (API Format)** — re-export it.
+> **Why use `sdxl-turbo-workflow-api.json` instead of exporting from
+> ComfyUI?** Open WebUI has a known bug
+> ([open-webui/open-webui#14538](https://github.com/open-webui/open-webui/issues/14538)):
+> it assumes whichever node appears **last in the JSON's node order**
+> is the output (`SaveImage`) node, but ComfyUI's "Save (API Format)"
+> export doesn't always place `SaveImage` last — when it doesn't,
+> Open WebUI tries to read the image from the wrong node and fails
+> with an error like `[ERROR: '4']` or `[ERROR: '1']`, even though
+> ComfyUI itself generates the image successfully. The included
+> `sdxl-turbo-workflow-api.json` is hand-ordered with `SaveImage`
+> (node `9`) last to avoid this. If you ever customize the workflow
+> and re-export, open the resulting JSON in a text editor and make
+> sure the `"9"` (or whichever ID is your `SaveImage` node) entry is
+> the **last key** in the file.
 
 ### Testing the integration
 
@@ -175,6 +185,13 @@ the LLM in memory.
   curl http://localhost:8188/system_stats
   ```
   If this doesn't return JSON, ComfyUI itself isn't up.
+
+- **`[ERROR: '4']`, `[ERROR: '1']`, or similar `[ERROR: '<number>']`**:
+  ComfyUI generated the image successfully (check
+  `curl http://localhost:8188/history` to confirm), but Open WebUI
+  failed to retrieve it due to the node-ordering bug described above.
+  Make sure you uploaded `sdxl-turbo-workflow-api.json` (with
+  `SaveImage` last), not a fresh ComfyUI export.
 
 - **"Invalid workflow" or node mapping errors**: re-check the Node
   IDs match the table above (1, 4, 6, 6, 7, 7) and that the workflow
